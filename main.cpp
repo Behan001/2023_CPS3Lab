@@ -1,26 +1,29 @@
-#include "mbed.h"
+#include "mbed.h" //Include necessary header files
 #include "LM75B.h"
 #include "C12832.h"
 #include "LocalFileSystem.h"
 
-#define LOG_INTERVAL_MINUTES 5
+#define LOG_INTERVAL_MINUTES 5 //Define LOG_INTERVAL_MINUTES
 
+//Create objects for LCD display, LM75B temperature sensor, and LocalFileSystem.
 C12832 lcd(p5, p7, p6, p8, p11);
 LM75B sensor(p28, p27);
 LocalFileSystem local("local");
 
-int main() {
+int main() { //Create a file pointer 
     FILE *fp = fopen("/local/temp_log.txt", "w");
     if (fp == NULL) {
         error("Could not open file for writing\n");
     }
 
+//Initialize variables floats, int and time_t
     float min_t = 100;
     float max_t = -100;
     float avg_t = 0.0;
     int num_samples = 0;
     time_t last_log_time = time(NULL);
 
+//While loop to read and update the temperature, write it to the file
     while (1) {
         float temp = sensor.read();
         fprintf(fp, "%.3f\n", temp);
@@ -34,6 +37,7 @@ int main() {
         avg_t = ((avg_t * num_samples) + temp) / (num_samples + 1);
         num_samples++;
 
+//Check if it's time to log the data, close the file, and reopen it for reading.
         time_t current_time = time(NULL);
         if ((current_time - last_log_time) >= (LOG_INTERVAL_MINUTES * 60)) { 
             fclose(fp); // Close file
@@ -60,7 +64,7 @@ int main() {
 
             lcd.cls();
             lcd.locate(0, 3);
-            lcd.printf("Min: %.3f\nMax: %.3f\nAvg: %.3f", min_t, max_t, avg_t);
+            lcd.printf("Min: %.3f\nMax: %.3f\nAvg: %.3f", min_t, max_t, avg_t); //Print to mbed LCD for Max, Min and Avg
 
             fclose(fp);
             fp = fopen("/local/temp_log.txt", "a");
@@ -71,7 +75,7 @@ int main() {
             last_log_time = current_time;
         }
 
-        wait(1.0);
+        wait(1.0); // wait 1 to repeat the loop
     }
 }
 
